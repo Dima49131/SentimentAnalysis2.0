@@ -19,7 +19,7 @@ This is my second attempt at creating a sentiment analysis tool. This version le
 The `model_files` folder contains the full trained model. To train your own model:
 1. Delete the existing `model_files` folder
 2. Run the training process (a new folder will be created automatically)
-
+3. Make sure you update app.py to have the json file path you download to `PREDEFINED_JSON_PATH`
 ## Getting Started
 
 ### Installation
@@ -37,8 +37,8 @@ go to local host http://127.0.0.1:5000/
 Make sure the .txt file uploaded has each review on a seperate line to properly parse the file.
 
 # Live Demo 
-
 ### https://dima333212.pythonanywhere.com/
 
-<img width="1438" alt="Screen Shot 2025-05-01 at 12 29 32 AM" src="https://github.com/user-attachments/assets/0d98c6be-1ebd-433f-8580-f389388719be" />
+<img width="1440" alt="Screen Shot 2025-05-01 at 1 10 18 AM" src="https://github.com/user-attachments/assets/61cc998d-58e5-464c-9456-1486e6ed81d1" />
+
 
