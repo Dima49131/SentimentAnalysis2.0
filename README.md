@@ -1,3 +1,6 @@
+# Current Live Demo
+https://dima333212.pythonanywhere.com/
+
 # Sentiment Analysis 2.0
 This is my second attempt and making a sentiment analysis tool. This time i've leveraged a larger amount of data to train the model on. Specifically using Amazon reviews from 2018, found here https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/
 
