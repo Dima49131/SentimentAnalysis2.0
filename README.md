@@ -33,6 +33,9 @@ python app.py
 ```
 go to local host http://127.0.0.1:5000/
 
+### Side Note
+Make sure the .txt file uploaded has each review on a seperate line to properly parse the file.
+
 # Live Demo 
 
 ### https://dima333212.pythonanywhere.com/
