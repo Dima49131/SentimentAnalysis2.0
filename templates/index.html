@@ -1,0 +1,348 @@
+<h2>Upload a File for Sentiment Analysis</h2>
+<form id="uploadForm" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".csv,.txt" required>
+    <button type="submit">Analyze</button>
+</form>
+
+<!-- Visualization Container -->
+<div id="visualizationContainer" style="display: none;">
+    <h3>Sentiment Distribution</h3>
+    <div class="chart-row">
+        <div class="chart-col">
+            <canvas id="pieChart"></canvas>
+        </div>
+        <div class="chart-col">
+            <canvas id="barChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Results Table -->
+<div id="resultsContainer">
+    <table id="resultsTable">
+        <!-- Results will be inserted here -->
+    </table>
+</div>
+
+<style>
+    /* Base Styles */
+    #uploadForm {
+        margin: 20px 0;
+        padding: 20px;
+        background: #f5f5f5;
+        border-radius: 8px;
+    }
+    
+    #uploadForm input[type="file"] {
+        margin-right: 10px;
+    }
+    
+    #uploadForm button {
+        padding: 8px 16px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    
+    #uploadForm button:hover {
+        background: #45a049;
+    }
+    
+    #resultsContainer {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 20px;
+        max-height: 500px;
+        overflow-y: auto;
+    }
+    
+    /* Table Styles */
+    #resultsTable {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    #resultsTable th {
+        position: sticky;
+        top: 0;
+        background: #333;
+        color: white;
+        padding: 10px;
+        text-align: left;
+    }
+    
+    #resultsTable td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        max-width: 600px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .positive { color: #4CAF50; font-weight: bold; }
+    .negative { color: #f44336; font-weight: bold; }
+    .neutral { color: #FFA500; font-weight: bold; }  /* New neutral style */
+    
+    #resultsTable tr:nth-child(even) { background-color: #f9f9f9; }
+    #resultsTable tr:hover { background-color: #f1f1f1; }
+    
+    #resultsTable td:hover {
+        white-space: normal;
+        overflow: visible;
+        max-width: none;
+        z-index: 1;
+        position: relative;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    /* Chart Layout */
+    #visualizationContainer {
+        margin: 20px 0;
+        display: none;
+        width: 100%;
+    }
+
+    .chart-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        width: 100%;
+    }
+
+    .chart-col {
+        flex: 1;
+        min-width: 300px;
+        position: relative;
+        height: 350px;
+    }
+
+    #pieChart, #barChart {
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 350px;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .chart-row {
+            flex-direction: column;
+        }
+        
+        .chart-col {
+            min-width: 100%;
+            height: 300px;
+        }
+        
+        #resultsContainer {
+            max-height: 400px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        #uploadForm button {
+            display: block;
+            margin-top: 10px;
+            width: 100%;
+        }
+        
+        #resultsTable td {
+            max-width: 200px;
+        }
+    }
+</style>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('uploadForm');
+    let pieChart = null;
+    let barChart = null;
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(form);
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultsTable = document.getElementById('resultsTable');
+            if (!resultsTable) {
+                console.error('resultsTable element not found');
+                return;
+            }
+
+            // Clear old results and create header
+            resultsTable.innerHTML = `
+                <tr>
+                    <th>Review Text</th>
+                    <th>Predicted Sentiment</th>
+                </tr>
+            `;
+
+            if (data.error) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td colspan="3" style="color:red;">Error: ${data.error}</td>`;
+                resultsTable.appendChild(tr);
+                return;
+            }
+
+            // Initialize counters for visualization
+            let predictedPositive = 0;
+            let predictedNegative = 0;
+            let predictedNeutral = 0;
+            let actualPositive = 0;
+            let actualNegative = 0;
+            let actualNeutral = 0;
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                const predictedSentiment = row['Predicted Sentiment'].toLowerCase();
+                const actualSentiment = row['Actual Sentiment'].toLowerCase();
+                
+                // Determine CSS class for styling
+                let predictedClass = '';
+                let actualClass = '';
+                
+                if (predictedSentiment === 'positive') {
+                    predictedClass = 'positive';
+                    predictedPositive++;
+                } else if (predictedSentiment === 'negative') {
+                    predictedClass = 'negative';
+                    predictedNegative++;
+                } else {
+                    predictedClass = 'neutral';
+                    predictedNeutral++;
+                }
+                
+                if (actualSentiment === 'positive') {
+                    actualClass = 'positive';
+                    actualPositive++;
+                } else if (actualSentiment === 'negative') {
+                    actualClass = 'negative';
+                    actualNegative++;
+                } else if (actualSentiment === 'neutral' || actualSentiment === 'unknown') {
+                    actualClass = 'neutral';
+                    actualNeutral++;
+                }
+
+                tr.innerHTML = `
+                    <td title="${row.Review}">${row.Review}</td>
+                    <td class="${predictedClass}">${row['Predicted Sentiment']}</td>
+                `;
+                resultsTable.appendChild(tr);
+            });
+
+            // Show and update visualization
+            updateCharts(predictedPositive, predictedNegative, predictedNeutral, 
+                        actualPositive, actualNegative, actualNeutral);
+        })
+        .catch(err => {
+            console.error('Upload error:', err);
+            const resultsTable = document.getElementById('resultsTable');
+            if (resultsTable) {
+                resultsTable.innerHTML = `
+                    <tr>
+                        <td colspan="3" style="color:red;">Upload failed: ${err.message}</td>
+                    </tr>
+                `;
+            }
+        });
+    });
+
+    function updateCharts(predictedPos, predictedNeg, predictedNeu, actualPos, actualNeg, actualNeu) {
+        const vizContainer = document.getElementById('visualizationContainer');
+        vizContainer.style.display = 'block';
+        
+        // Destroy previous charts if they exist
+        if (pieChart) pieChart.destroy();
+        if (barChart) barChart.destroy();
+        
+        // Pie Chart (Left)
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        pieChart = new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Positive', 'Negative', 'Neutral'],
+                datasets: [{
+                    data: [predictedPos, predictedNeg, predictedNeu],
+                    backgroundColor: [
+                        'rgba(76, 175, 80, 0.7)',    // Green
+                        'rgba(244, 67, 54, 0.7)',     // Red
+                        'rgba(255, 165, 0, 0.7)'      // Orange (new neutral color)
+                    ],
+                    borderColor: [
+                        'rgba(76, 175, 80, 1)',
+                        'rgba(244, 67, 54, 1)',
+                        'rgba(255, 165, 0, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Predicted Sentiment Distribution'
+                    }
+                }
+            }
+        });
+        
+        // Bar Chart (Right)
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        barChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Positive', 'Negative', 'Neutral'],
+                datasets: [
+                    {
+                        label: 'Predicted',
+                        data: [predictedPos, predictedNeg, predictedNeu],
+                        backgroundColor: [
+                            'rgba(76, 175, 80, 0.7)',  // Green for Positive
+                            'rgba(244, 67, 54, 0.7)',  // Yellow for Neutral
+                            'rgba(255, 206, 86, 0.7)'   // Red for Negative
+                        ],
+                        borderColor: [
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(255, 206, 86, 1)'
+                        ],
+                        borderWidth: 1
+                    },
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Count'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Predicted vs Actual Sentiment'
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
