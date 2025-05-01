@@ -1,5 +1,5 @@
 # Sentiment Analysis 2.0
-This is my second attempt and making a sentiment analysis tool. This time i've leveraged a larger amount of data to train the model on. Spesifically using amazon reviews from 2018, found here https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/
+This is my second attempt and making a sentiment analysis tool. This time i've leveraged a larger amount of data to train the model on. Specifically using Amazon reviews from 2018, found here https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/
 
 I trained it on 2,205,054 total reviews from the data set.
 735,018 positive, negative 735,018, and  735,018 neutral.
